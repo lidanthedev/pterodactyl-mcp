@@ -58,7 +58,6 @@ class ServerWebSocket {
     return new Promise<void>((resolve, reject) => {
       const ws = new WebSocket(socket, {
         origin: this.panelOrigin,
-        rejectUnauthorized: false,
       });
       let authed = false;
 
