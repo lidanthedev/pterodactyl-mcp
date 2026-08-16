@@ -96,6 +96,7 @@ class HttpClient {
     path: string,
     body?: unknown,
     query?: QueryParams,
+    rawBody = false,
   ): Promise<T> {
     const url = new URL(`${this.baseUrl}${path}`);
     if (query) {
@@ -109,13 +110,18 @@ class HttpClient {
       Accept: "Application/vnd.pterodactyl.v1+json",
     };
     if (body !== undefined) {
-      headers["Content-Type"] = "application/json";
+      headers["Content-Type"] = rawBody ? "text/plain" : "application/json";
     }
 
     const res = await fetch(url.toString(), {
       method,
       headers,
-      body: body !== undefined ? JSON.stringify(body) : undefined,
+      body:
+        body !== undefined
+          ? rawBody
+            ? String(body)
+            : JSON.stringify(body)
+          : undefined,
     });
 
     if (!res.ok) {
@@ -140,6 +146,9 @@ class HttpClient {
   }
   post<T>(path: string, body?: unknown, query?: QueryParams) {
     return this.request<T>("POST", path, body, query);
+  }
+  postRaw<T>(path: string, body: string, query?: QueryParams) {
+    return this.request<T>("POST", path, body, query, true);
   }
   patch<T>(path: string, body?: unknown) {
     return this.request<T>("PATCH", path, body);
@@ -481,7 +490,7 @@ export class ClientAPI {
   }
 
   writeFile(serverId: string, file: string, content: string) {
-    return this.http.post(
+    return this.http.postRaw(
       `${this.base}/servers/${serverId}/files/write`,
       content,
       { file },
